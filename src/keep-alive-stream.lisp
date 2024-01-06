@@ -21,13 +21,15 @@
            :initarg :stream
            :initform (error ":stream is required")
            :accessor keep-alive-stream-stream
-           :documentation "A stream; when we read END elements from it, we call CLOSE-ACTION on it and
+           :documentation
+	   "A stream; when we read END elements from it, we call CLOSE-ACTION on it and
    set this slot to nil.")
    (end :initarg :end
         :initform nil
         :accessor keep-alive-stream-end)
    (close-action :initarg :on-close-or-eof :reader close-action
-                 :documentation "A (lambda (stream abort)) which will be called with keep-alive-stream-stream
+                 :documentation
+		 "A (lambda (stream abort)) which will be called with keep-alive-stream-stream
    when the stream is either closed or we hit end of file or we hit end")))
 
 (defun keep-alive-stream-close-underlying-stream (underlying-stream abort)
@@ -37,13 +39,18 @@
 (defclass keep-alive-chunked-stream (keep-alive-stream)
   ((chunga-stream :initarg :chunga-stream :accessor chunga-stream)))
 
-(defun make-keep-alive-stream (stream &key end chunked-stream (on-close-or-eof #'keep-alive-stream-close-underlying-stream))
+(defun make-keep-alive-stream
+    (stream &key end chunked-stream
+	      (on-close-or-eof #'keep-alive-stream-close-underlying-stream))
   "ON-CLOSE-OR-EOF takes a single parameter, STREAM (the stream passed in here, not the
 keep-alive-stream), and should handle clean-up of it"
   (assert (xor end chunked-stream))
   (if chunked-stream
-      (make-instance 'keep-alive-chunked-stream :stream stream :chunga-stream chunked-stream :on-close-or-eof on-close-or-eof)
-      (make-instance 'keep-alive-stream :stream stream :end end :on-close-or-eof on-close-or-eof)))
+      (make-instance 'keep-alive-chunked-stream
+		     :stream stream :chunga-stream chunked-stream
+		     :on-close-or-eof on-close-or-eof)
+      (make-instance 'keep-alive-stream :stream stream :end end
+					:on-close-or-eof on-close-or-eof)))
 
 (defun maybe-close (stream &optional (close-if nil))
   "Will close the underlying stream if close-if is T (unless it is already closed).
@@ -101,9 +108,11 @@ keep-alive-stream), and should handle clean-up of it"
       start
       (if (chunga:chunked-stream-input-chunking-p (chunga-stream stream))
           (prog1
-              (let ((num-read (read-sequence sequence (chunga-stream stream) :start start :end end)))
+              (let ((num-read (read-sequence sequence (chunga-stream stream)
+					     :start start :end end)))
                 num-read)
-            (maybe-close stream (not (chunga:chunked-stream-input-chunking-p (chunga-stream stream)))))
+            (maybe-close stream (not (chunga:chunked-stream-input-chunking-p
+				      (chunga-stream stream)))))
           start)))
 
 (defmethod stream-element-type ((stream keep-alive-chunked-stream))

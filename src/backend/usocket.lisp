@@ -224,7 +224,8 @@
            d))
     (boundary-line)))
 
-(defun convert-body (body content-encoding content-type content-length chunkedp force-binary force-string keep-alive-p on-close)
+(defun convert-body (body content-encoding content-type content-length chunkedp
+		     force-binary force-string keep-alive-p on-close)
   (when (streamp body)
     (cond
       ((and keep-alive-p chunkedp)
@@ -428,7 +429,8 @@
                             content headers
                             basic-auth
                             cookie-jar
-                            (connect-timeout *default-connect-timeout*) (read-timeout *default-read-timeout*)
+                            (connect-timeout *default-connect-timeout*)
+			    (read-timeout *default-read-timeout*)
                             (keep-alive t) (use-connection-pool t)
                             (max-redirects 5)
                             ssl-key-file ssl-cert-file ssl-key-password
@@ -442,7 +444,8 @@
                             &aux
                             (proxy-uri (and proxy (quri:uri proxy)))
                             (original-user-supplied-stream stream)
-                            (user-supplied-stream (if (usocket-wrapped-stream-p stream) (usocket-wrapped-stream-stream stream) stream)))
+                            (user-supplied-stream (if (usocket-wrapped-stream-p stream)
+						      (usocket-wrapped-stream-stream stream) stream)))
   (declare (ignorable ssl-key-file ssl-cert-file ssl-key-password
                       connect-timeout ca-path)
            (type real version)
@@ -450,10 +453,13 @@
   (labels ((make-new-connection (uri)
              (restart-case
                  (let* ((con-uri (quri:uri (or proxy uri)))
-                        (connection (usocket:socket-connect (uri-host con-uri)
-                                                            (uri-port con-uri)
-                                                            #-(or ecl clasp clisp allegro) :timeout #-(or ecl clasp clisp allegro) connect-timeout
-                                                            :element-type '(unsigned-byte 8)))
+                        (connection
+			  (usocket:socket-connect
+			   (uri-host con-uri)
+                           (uri-port con-uri)
+                           #-(or ecl clasp clisp allegro) :timeout
+			   #-(or ecl clasp clisp allegro) connect-timeout
+                           :element-type '(unsigned-byte 8)))
                         (stream
                           (usocket:socket-stream connection))
                         (scheme (uri-scheme uri)))
@@ -464,9 +470,10 @@
                    (when (socks5-proxy-p proxy-uri)
                      (ensure-socks5-connected stream stream uri method))
                    (if (string= scheme "https")
-                       (make-ssl-stream (if (http-proxy-p proxy-uri)
-                                               (make-connect-stream uri version stream (make-proxy-authorization con-uri))
-                                               stream) ca-path ssl-key-file ssl-cert-file ssl-key-password (uri-host uri) insecure)
+                       (make-ssl-stream
+			(if (http-proxy-p proxy-uri)
+                            (make-connect-stream uri version stream (make-proxy-authorization con-uri))
+                            stream) ca-path ssl-key-file ssl-cert-file ssl-key-password (uri-host uri) insecure)
                        stream))
                (retry-request ()
                  :report "Retry the same request."
@@ -497,7 +504,8 @@
                                       (uri-scheme uri)
                                       (uri-authority uri)) stream #'close))
            (return-stream-to-pool-or-close (stream connection-header uri)
-             (if (and (not user-supplied-stream) use-connection-pool (connection-keep-alive-p connection-header))
+             (if (and (not user-supplied-stream) use-connection-pool
+		      (connection-keep-alive-p connection-header))
                  (return-stream-to-pool stream uri)
                  (when (open-stream-p stream)
                    (close stream))))
@@ -507,7 +515,8 @@
               the stream back to the user who must close it."
              (unless want-stream
                (cond
-                 ((and use-connection-pool (connection-keep-alive-p connection-header) (not user-supplied-stream))
+                 ((and use-connection-pool (connection-keep-alive-p connection-header)
+		       (not user-supplied-stream))
                    (return-stream-to-pool stream uri))
                  ((not (connection-keep-alive-p connection-header))
                   (when (open-stream-p stream)
@@ -602,7 +611,9 @@
                       (string
                        (write-header* :content-type (or content-type "text/plain"))
                        (unless chunkedp
-                         (write-header* :content-length (length (the (simple-array (unsigned-byte 8) *) (babel:string-to-octets content))))))
+                         (write-header* :content-length
+					(length (the (simple-array (unsigned-byte 8) *)
+						     (babel:string-to-octets content))))))
                       ((array (unsigned-byte 8) *)
                        (write-header* :content-type (or content-type "text/plain"))
                        (unless chunkedp
@@ -765,7 +776,8 @@
                          (setf location-uri (quri:merge-uris location-uri uri))
                          ;; Close connection if it isn't from our connection pool or from the user and we aren't going to
                          ;; pass it to our new call.
-                         (when (not same-server-p) (return-stream-to-pool-or-close stream (gethash "connection" response-headers) uri))
+                         (when (not same-server-p)
+			   (return-stream-to-pool-or-close stream (gethash "connection" response-headers) uri))
                          (setf (getf args :headers)
                                (nconc `((:host . ,(uri-host location-uri))) headers))
                          (setf (getf args :max-redirects)

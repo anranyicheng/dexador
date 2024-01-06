@@ -39,7 +39,8 @@
  the value of the environment variable HTTPS_PROXY or HTTP_PROXY if not on Windows.")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *speedy-declaration* '(declare (optimize (speed 3) (safety 0) (space 0) (compilation-speed 0))))
+  (defvar *speedy-declaration*
+    '(declare (optimize (speed 3) (safety 0) (space 0) (compilation-speed 0))))
   (defvar *careful-declaration* '(declare (optimize (speed 3) (safety 2)))))
 
 (defmacro defun-speedy (name lambda-list &body body)

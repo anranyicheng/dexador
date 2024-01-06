@@ -35,12 +35,15 @@
   (num-elts 0 :type fixnum)
   (max-elts 8 :type fixnum))
 
-(defun make-connection-pool (&optional (max-active-connections *max-active-connections*))
-  (make-lru-pool :hash-table (make-hash-table :test 'equal) :max-elts max-active-connections))
+(defun make-connection-pool
+    (&optional (max-active-connections *max-active-connections*))
+  (make-lru-pool :hash-table (make-hash-table :test 'equal)
+		 :max-elts max-active-connections))
 
 (defvar *connection-pool* nil)
 
-(defun make-new-connection-pool (&optional (max-active-connections *max-active-connections*))
+(defun make-new-connection-pool
+    (&optional (max-active-connections *max-active-connections*))
   (clear-connection-pool)
   (setf *connection-pool* (make-connection-pool max-active-connections)))
 
@@ -100,7 +103,8 @@
    otherwise nil.  The EVICTION-CALLBACK should take one parameter, the evicted element."
   (declare (type lru-pool lru-pool))
   (let* ((old-head (lru-pool-head lru-pool))
-         (lru-pool-elt (make-lru-pool-elt :prev nil :next old-head :elt elt :key key :eviction-callback eviction-callback))
+         (lru-pool-elt (make-lru-pool-elt :prev nil :next old-head :elt elt :key key
+					  :eviction-callback eviction-callback))
          (hash-table (lru-pool-hash-table lru-pool)))
     (setf (lru-pool-head lru-pool) lru-pool-elt)
     (push lru-pool-elt (gethash key hash-table))
@@ -120,10 +124,12 @@
     (let (objs)
       (loop with lru-pool-elt = (lru-pool-head obj)
             while lru-pool-elt
-            do (push (list (lru-pool-elt-key lru-pool-elt) (lru-pool-elt-elt lru-pool-elt)) objs)
+            do (push (list (lru-pool-elt-key lru-pool-elt)
+			   (lru-pool-elt-elt lru-pool-elt)) objs)
             do (setf lru-pool-elt (lru-pool-elt-next lru-pool-elt)))
       (if objs
-          (format str "~A/~A elts~%~{ ~{~A~^: ~}~^~%~}" (lru-pool-num-elts obj) (lru-pool-max-elts obj) objs)
+          (format str "~A/~A elts~%~{ ~{~A~^: ~}~^~%~}" (lru-pool-num-elts obj)
+		  (lru-pool-max-elts obj) objs)
           (format str "empty")))))
 
 (defmacro with-lock (lock &body body)
