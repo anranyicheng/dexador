@@ -593,11 +593,11 @@
                            (write-header* :proxy-authorization proxy-authorization))))))
                  (cond
                    (multipart-p
-                    (write-header* :content-type (format nil "~A; boundary=~A"
+                    (write-header :content-type (format nil "~A; boundary=~A"
                                                          (or content-type "multipart/form-data")
                                                          boundary))
                     (unless chunkedp
-                      (write-header* :content-length
+                      (write-header :content-length
                                      (multipart-content-length content boundary))))
                    (form-urlencoded-p
                     (write-header* :content-type "application/x-www-form-urlencoded")
